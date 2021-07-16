@@ -186,12 +186,12 @@ export async function execRequest(routes: Routers, ctx: AppContext) {
 	if (!match) throw new ErrorNotFound();
 
 	const endPoint = match.route.findEndPoint(ctx.request.method as HttpMethod, match.subPath.schema);
-	if (ctx.URL && !isValidOrigin(ctx.URL.origin, baseUrl(endPoint.type), endPoint.type)) throw new ErrorNotFound('Invalid origin', 'invalidOrigin');
+	if (ctx.URL && !isValidOrigin(ctx.URL.origin, baseUrl(endPoint.type), endPoint.type)) throw new ErrorNotFound(`Invalid origin: ${ctx.URL.origin}`, 'invalidOrigin');
 
 	// This is a generic catch-all for all private end points - if we
 	// couldn't get a valid session, we exit now. Individual end points
 	// might have additional permission checks depending on the action.
-	if (!match.route.isPublic(match.subPath.schema) && !ctx.owner) throw new ErrorForbidden();
+	if (!match.route.isPublic(match.subPath.schema) && !ctx.joplin.owner) throw new ErrorForbidden();
 
 	return endPoint.handler(match.subPath, ctx);
 }

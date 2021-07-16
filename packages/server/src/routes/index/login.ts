@@ -8,7 +8,7 @@ import defaultView from '../../utils/defaultView';
 import { View } from '../../services/MustacheService';
 
 function makeView(error: any = null): View {
-	const view = defaultView('login');
+	const view = defaultView('login', 'Login');
 	view.content = {
 		error,
 		signupUrl: config().signupEnabled ? makeUrl(UrlType.Signup) : '',
@@ -28,7 +28,7 @@ router.post('login', async (_path: SubPath, ctx: AppContext) => {
 	try {
 		const body = await formParse(ctx.req);
 
-		const session = await ctx.models.session().authenticate(body.fields.email, body.fields.password);
+		const session = await ctx.joplin.models.session().authenticate(body.fields.email, body.fields.password);
 		ctx.cookies.set('sessionId', session.id);
 		return redirect(ctx, `${config().baseUrl}/home`);
 	} catch (error) {

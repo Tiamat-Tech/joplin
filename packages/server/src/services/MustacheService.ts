@@ -14,7 +14,9 @@ export interface RenderOptions {
 
 export interface View {
 	name: string;
+	title: string;
 	path: string;
+	layout?: string;
 	navbar?: boolean;
 	content?: any;
 	partials?: string[];
@@ -33,6 +35,8 @@ interface GlobalParams {
 	termsUrl?: string;
 	privacyUrl?: string;
 	showErrorStackTraces?: boolean;
+	userDisplayName?: string;
+	supportEmail?: string;
 }
 
 export function isView(o: any): boolean {
@@ -74,8 +78,9 @@ export default class MustacheService {
 		this.prefersDarkEnabled_ = v;
 	}
 
-	private get defaultLayoutPath(): string {
-		return `${config().layoutDir}/default.mustache`;
+	private layoutPath(name: string): string {
+		if (!name) name = 'default';
+		return `${config().layoutDir}/${name}.mustache`;
 	}
 
 	private get defaultLayoutOptions(): GlobalParams {
@@ -102,6 +107,13 @@ export default class MustacheService {
 		return output;
 	}
 
+	private userDisplayName(owner: User): string {
+		if (!owner) return '';
+		if (owner.full_name) return owner.full_name;
+		if (owner.email) return owner.email;
+		return '';
+	}
+
 	public async renderView(view: View, globalParams: GlobalParams = null): Promise<string> {
 		const cssFiles = this.resolvesFilePaths('css', view.cssFiles || []);
 		const jsFiles = this.resolvesFilePaths('js', view.jsFiles || []);
@@ -110,6 +122,7 @@ export default class MustacheService {
 		globalParams = {
 			...this.defaultLayoutOptions,
 			...globalParams,
+			userDisplayName: this.userDisplayName(globalParams ? globalParams.owner : null),
 		};
 
 		const contentHtml = Mustache.render(
@@ -124,6 +137,7 @@ export default class MustacheService {
 		const layoutView: any = {
 			global: globalParams,
 			pageName: view.name,
+			pageTitle: `${config().appName} - ${view.title}`,
 			contentHtml: contentHtml,
 			cssFiles: cssFiles,
 			jsFiles: jsFiles,
@@ -131,7 +145,7 @@ export default class MustacheService {
 			...view.content,
 		};
 
-		return Mustache.render(await this.loadTemplateContent(this.defaultLayoutPath), layoutView, this.partials_);
+		return Mustache.render(await this.loadTemplateContent(this.layoutPath(view.layout)), layoutView, this.partials_);
 	}
 
 }
